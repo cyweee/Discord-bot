@@ -1,0 +1,2 @@
+
+print("kolya skachay project")
