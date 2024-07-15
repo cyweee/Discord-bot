@@ -32,10 +32,12 @@ async def on_message(message):
         random_response = random.choice(config["responses"])
         await message.reply(random_response)
 
-    if "слава украине" in message.content.lower():
+    elif "слава украине" in message.content.lower():
         await message.reply("в составе РОССИИ!!!")
 
-    if "иди нахуй" in message.content.lower():
+    elif "иди нахуй" in message.content.lower():
         await message.reply("Своим помахуй")
+    else:
+        pass
 
 bot.run(token_ds)
