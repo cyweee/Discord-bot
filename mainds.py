@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
 import yt_dlp as youtube_dl
 import json
 import deepl
@@ -20,8 +19,6 @@ token_ds = config["token_ds"]
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(intents=intents, command_prefix="$")
-
-# cywe func begin
 
 # configuration for yt-dlp
 ytdl_format_options = {
@@ -43,6 +40,7 @@ ffmpeg_options = {
 }
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
+
 class MusicPlayer:
     def __init__(self):
         self.queue = []
@@ -63,7 +61,8 @@ class MusicPlayer:
             self.is_playing = True
             url = self.queue.pop(0)
             filename = await self.from_url(url, stream=True)
-            ctx.voice_client.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=filename, **ffmpeg_options), after=lambda e: self.bot.loop.create_task(self.play_next(ctx)))
+            ctx.voice_client.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=filename, **ffmpeg_options),
+                                  after=lambda e: self.bot.loop.create_task(self.play_next(ctx)))
             await ctx.send(f'Now playing: {url}')
         else:
             self.is_playing = False
@@ -74,6 +73,14 @@ class MusicPlayer:
             await self.play_next(ctx)
         else:
             await ctx.send(f'Queued: {url}')
+
+    async def skip(self, ctx):
+        if ctx.voice_client.is_playing():
+            ctx.voice_client.stop()
+            await self.play_next(ctx)
+            await ctx.send("Skipped to the next track.")
+        else:
+            await ctx.send("No track is currently playing.")
 
 
 music_player = MusicPlayer()
@@ -102,6 +109,13 @@ async def stop(ctx):
         ctx.voice_client.stop()
         music_player.queue = []
         music_player.is_playing = False
+        await ctx.send("Playback stopped and queue cleared.")
+
+
+@bot.command(name='skip')
+async def skip(ctx):
+    await music_player.skip(ctx)
+#cywe
 
 # korvander's func begin
 
