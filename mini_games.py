@@ -280,4 +280,12 @@ async def dodge(ctx):
 async def on_ready():
     print(f'Logged in as {bot.user.name}')
 
+# lAST EASIEST mini-game
+@bot.command(name="flip")
+async def flip(ctx):
+    outcome = random.choice(["Heads", "Tails"])
+    await ctx.send(f"{outcome}")
+
+# lAST EASIEST mini-game
+
 bot.run(token_ds)
