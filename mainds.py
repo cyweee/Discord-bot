@@ -1,12 +1,11 @@
-import yt_dlp as youtube_dl
 import discord
 from discord.ext import commands
 from discord import app_commands
-import random
+import yt_dlp as youtube_dl
 import json
-
+import deepl
 import asyncio
-
+import random
 
 try:
     with open('config.json', 'r', encoding='utf-8') as file:
@@ -15,7 +14,8 @@ except (FileNotFoundError, json.JSONDecodeError) as e:
     print(f"failed: {e}")
     exit(1)
 
-
+DEEPL_API_KEY = config["DEEPL_API_KEY"]
+translator = deepl.Translator(DEEPL_API_KEY)
 token_ds = config["token_ds"]
 intents = discord.Intents.default()
 intents.message_content = True
@@ -104,11 +104,6 @@ async def stop(ctx):
         music_player.is_playing = False
 
 # korvander's func begin
-@bot.command()
-async def random_word(ctx):
-    random_response = random.choice(config["responses"])
-    await ctx.send(random_response)
-
 
 @bot.event
 async def on_message(message):
@@ -123,6 +118,9 @@ async def on_message(message):
 
     elif "слава украине" in message.content.lower():
         await message.reply("в составе РОССИИ!!!")
+
+    elif "слава россии" in message.content.lower():
+        await message.reply("Героям Слава!!")
 
     elif "иди нахуй" in message.content.lower():
         await message.reply("Своим помахуй")
@@ -399,5 +397,21 @@ async def flip(ctx):
     await ctx.send(f"{outcome}")
 
 # lAST EASIEST mini-game
+
+# korvander's func
+
+@bot.command(name='tr')
+async def translate(ctx, lang_to: str, *, text: str):
+    supported_langs = ["BG", "CS", "DA", "DE", "EL", "EN", "ES", "ET", "FI", "FR", "HU", "ID", "IT", "JA", "KO", "LT", "LV", "NB", "NL", "PL", "PT", "RO", "RU", "SK", "SL", "SV", "TR", "UK", "ZH", "AR"]
+    lang_to = lang_to.upper()
+    if lang_to not in supported_langs:
+        await ctx.send(f"Ошибка: Язык '{lang_to}' не поддерживается. Пожалуйста, используйте один из следующих языков: {', '.join(supported_langs)}")
+        return
+    try:
+        # Используйте клиент DeepL для перевода
+        result = translator.translate_text(text, target_lang=lang_to)
+        await ctx.send(result.text)
+    except Exception as e:
+        await ctx.send(f"Ошибка: {str(e)}")
 
 bot.run(token_ds)
