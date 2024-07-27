@@ -112,7 +112,7 @@ async def stop(ctx):
         await ctx.send("Playback stopped and queue cleared.")
 
 
-@bot.command(name='skip')
+@bot.command(name='n')
 async def skip(ctx):
     await music_player.skip(ctx)
 #cywe
@@ -427,5 +427,85 @@ async def translate(ctx, lang_to: str, *, text: str):
         await ctx.send(result.text)
     except Exception as e:
         await ctx.send(f"Ошибка: {str(e)}")
+
+
+bot.remove_command('help')
+
+@bot.command(name='help')
+async def help_command(ctx):
+    embed = discord.Embed(
+        title="💾Main information abt bot:",
+        description=(
+            "ㅤMain prefix is {$} below you can find out many commands:"),
+        color=0x009dff
+    )
+
+    embed.add_field(
+        name="🎶Music commands:",
+        value="ㅤ$p | $n | $l | $s",
+        inline=False
+    )
+
+    embed.add_field(
+        name="🎈Funny commands to play with ur friend:",
+        value=(
+            "ㅤ$start\n"
+            "ㅤ$flip\n"
+            "ㅤ$start ru\n"
+            "ㅤ$continue\n"
+            "ㅤ$start_shooter\n"
+            "ㅤ$attack\n"
+            "ㅤ$use_potion\n"
+            "ㅤ$dodge"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="📋 Info Abt Us::",
+        value=" ㅤInfo abt our group and process of doing bot: (link to our bot )ㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ    ",
+        inline=False
+    )
+    embed.set_footer(text="📜for detailed information send: $info_help")
+    await ctx.send(embed=embed)
+
+@bot.command(name='info_help')
+async def info_help(ctx):
+    embed = discord.Embed(
+        title="🔮Detailed information abt bot:",
+        description=(
+            "ㅤEvery command has his own usability and this is info ant them:"),
+        color=0x0091eb
+    )
+
+    embed.add_field(
+        name="🎼Music info commands:",
+        value=(
+            "ㅤ$p - Send this to play your track then space and your url to youtube video\n"
+            "ㅤ$n - Send this to skip your track\n"
+            "ㅤ$s - Send this to stop ur track\n"
+            "ㅤ$l - Send this to just leave bot from vc"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="🎈Funny game's detailed info:",
+        value=(
+            "ㅤ$start - Command to start a game on based EN language\n"
+            "ㅤ$start ru - Command to start a game on RU language\n"
+            "ㅤ$continue - Command to continue your adventure in game\n"
+            "ㅤ$start_shooter - Command to start play shooter text game\n"
+            "ㅤ$attack - Command to attack your enemy's in shooter game\n"
+            "ㅤ$use_potion - Command to use your poison in shooter game\n"
+            "ㅤ$dodge - Command to dodge enemy's in shooter game\n"
+            "ㅤ$flip - Command to start play common game {Heads and Tails}"
+        ),
+        inline=False
+    )
+
+    embed.set_footer(text="ㅤ©prod by: cywwee, korvander, artimok")
+    await ctx.send(embed=embed)
+
 
 bot.run(token_ds)
