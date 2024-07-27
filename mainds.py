@@ -10,7 +10,7 @@ try:
     with open('config.json', 'r', encoding='utf-8') as file:
         config = json.load(file)
 except (FileNotFoundError, json.JSONDecodeError) as e:
-    print(f"Ошибка при загрузке конфигурации: {e}")
+    print(f"failed: {e}")
     exit(1)
 
 token_ds = config["token_ds"]
@@ -38,44 +38,67 @@ ytdl_format_options = {
 ffmpeg_options = {
     'options': '-vn'
 }
-
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
-async def from_url(url, *, loop=None, stream=False):
-    loop = loop or asyncio.get_event_loop()
-    data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
+class MusicPlayer:
+    def __init__(self):
+        self.queue = []
+        self.is_playing = False
 
-    if 'entries' in data:
-        data = data['entries'][0]
+    async def from_url(self, url, *, loop=None, stream=False):
+        loop = loop or asyncio.get_event_loop()
+        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
 
-    filename = data['url'] if stream else ytdl.prepare_filename(data)
-    return filename
+        if 'entries' in data:
+            data = data['entries'][0]
 
-@bot.command(name='join')
-async def join(ctx):
-    if not ctx.message.author.voice:
-        await ctx.send("you're not currently in a voice channel")
-        return
+        filename = data['url'] if stream else ytdl.prepare_filename(data)
+        return filename
 
-    channel = ctx.message.author.voice.channel
-    await channel.connect()
+    async def play_next(self, ctx):
+        if len(self.queue) > 0:
+            self.is_playing = True
+            url = self.queue.pop(0)
+            filename = await self.from_url(url, stream=True)
+            ctx.voice_client.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=filename, **ffmpeg_options), after=lambda e: self.bot.loop.create_task(self.play_next(ctx)))
+            await ctx.send(f'Now playing: {url}')
+        else:
+            self.is_playing = False
+
+    async def add_to_queue(self, ctx, url):
+        self.queue.append(url)
+        if not self.is_playing:
+            await self.play_next(ctx)
+        else:
+            await ctx.send(f'Queued: {url}')
+
+
+music_player = MusicPlayer()
+
+
+@bot.command(name='p')
+async def play(ctx, url):
+    if not ctx.voice_client:
+        if not ctx.message.author.voice:
+            await ctx.send("You're not currently in a voice channel")
+            return
+        channel = ctx.message.author.voice.channel
+        await channel.connect()
+    await music_player.add_to_queue(ctx, url)
+
 
 @bot.command(name='l')
 async def leave(ctx):
     if ctx.voice_client:
         await ctx.voice_client.disconnect()
 
-@bot.command(name='p')
-async def play(ctx, url):
-    async with ctx.typing():
-        filename = await from_url(url, stream=True)
-        ctx.voice_client.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=filename, **ffmpeg_options))
-    await ctx.send(f'Now playing: {url}')
 
 @bot.command(name='s')
 async def stop(ctx):
-    ctx.voice_client.stop()
-# cywe func begin
+    if ctx.voice_client:
+        ctx.voice_client.stop()
+        music_player.queue = []
+        music_player.is_playing = False
 
 # korvander's func begin
 @bot.command()
