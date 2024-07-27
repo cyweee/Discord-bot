@@ -5,6 +5,7 @@ import json
 import os
 import yt_dlp as youtube_dl
 import asyncio
+import deepl
 
 try:
     with open('config.json', 'r', encoding='utf-8') as file:
@@ -14,6 +15,7 @@ except (FileNotFoundError, json.JSONDecodeError) as e:
     exit(1)
 
 token_ds = config["token_ds"]
+DEEPL_API_KEY = config["DEEPL_API_KEY"]
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(intents=intents, command_prefix="$")
@@ -127,5 +129,31 @@ async def on_message(message):
         pass
 # korvander's func finish
 
+
+
+translator = deepl.Translator(DEEPL_API_KEY)
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user.name}')
+
+
+@bot.command(name='tr')
+async def translate(ctx, lang_to: str, *, text: str):
+    try:
+        result = translator.translate_text(text, target_lang=lang_to.upper())
+        await ctx.send(result.text)
+    except Exception as e:
+        await ctx.send(f"Ошибка: {str(e)}")
+
+@bot.command(name='tr_cz')
+async def tr_cz(ctx, lang_to: str, *, text: str):
+    try:
+
+        result = translator.translate_text(text, source_lang='CS', target_lang=lang_to.upper())
+
+        await ctx.send(result.text)
+    except Exception as e:
+
+        await ctx.send(f"Ошибка: {str(e)}")
 
 bot.run(token_ds)
