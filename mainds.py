@@ -19,6 +19,9 @@ token_ds = config["token_ds"]
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(intents=intents, command_prefix="$")
+bot.remove_command('help')
+request_log_player = []
+request_log_enemy = []
 
 # configuration for yt-dlp
 ytdl_format_options = {
@@ -266,6 +269,7 @@ class AdventureGame:
         else:
             return self.messages[self.language]["end_lose"]
 
+
 games = {}  # Словарь для отслеживания текущих игр для каждого игрока
 
 @bot.command(name="start")
@@ -284,133 +288,164 @@ async def continue_game(ctx, choice):
         response = game.advance_stage(choice)
         await ctx.send(response)
     else:
-        await ctx.send("You haven't started a game yet. Use `$start` to begin.")
+        await ctx.send("You haven't started a game yet. Use $start to begin.")
 
-# FIRST GAME
 
-# SECOND GAME (cywe)
+
+
+games = {}  # Словарь для хранения игр пользователей
+
+import random
+games = {}  # Словарь для хранения игр пользователей
 
 class ShooterGame:
-    def __init__(self):
-        self.player_health = 105
-        self.enemy_health = 100
+    def __init__(self, player_health=105, enemy_health=100, enemy_potions=1):
+        self.player_health = player_health
+        self.enemy_health = enemy_health
         self.player_potions = 2
-        self.enemy_potions = 1
+        self.enemy_potions = enemy_potions
+        self.request_log_enemy = []
+        self.request_log_player = []
 
     def attack(self):
-        player_damage = random.randint(10, 30)
-        enemy_damage = random.randint(5, 25)
-        self.enemy_health -= player_damage
-        self.player_health -= enemy_damage
-        if self.player_health <= 0:
-            return f"You have dealt {player_damage} damage. The enemy has inflicted {enemy_damage} damage. You lose."
-        elif self.enemy_health <= 0:
-            return f"You have dealt {player_damage} damage. The enemy has inflicted {enemy_damage} damage. You win"
+        return f"📃Battle results:"
+
+    def dodge(self):
+        if random.random() < 0.5:
+            return "You successfully dodged the enemy's attack!"
         else:
-            return f"You have dealt {player_damage} damage. The enemy has inflicted {enemy_damage} damage. Your health: {self.player_health}. Enemy Health: {self.enemy_health}."
+            enemy_damage = random.randint(5, 25)
+            self.player_health -= enemy_damage
+            damage_embed = discord.Embed(description=f"**-{enemy_damage} damage**", color=discord.Color.red())
+            health_embed = discord.Embed(description=f"**Your {self.player_health} hp**", color=discord.Color.green())
+            text = "**🏹The enemy attacked and inflicted:**"
+            text_1 = "**🔋Your current health:**"
+            return "You failed to dodge! The enemy hit you!", text, damage_embed, text_1, health_embed
+
+
 
     def use_potion(self):
         if self.player_potions > 0:
             heal_amount = random.randint(15, 30)
             self.player_health += heal_amount
             self.player_potions -= 1
-            return f"You used the potion and restored {heal_amount} health. Your current health: {self.player_health}. Potions remaining: {self.player_potions}."
+            heal_embed = discord.Embed(description=f"**+{heal_amount} hp**", color=discord.Color.green())
+            potions_embed = discord.Embed(description=f"**{self.player_potions} potions remaining**", color=discord.Color.green())
+            heal_text = "You used the potion and restored:"
+            heal_text_2 = "Potions remaining:"
+            return heal_text, heal_embed, heal_text_2, potions_embed
         else:
-            return "You have no potions left!"
+            return "You have no potions left!", None, None, None
 
     def enemy_use_potion(self):
-        if self.enemy_potions > 0:
-            heal_amount = random.randint(15, 30)
-            self.enemy_health += heal_amount
-            self.enemy_potions -= 1
-            return f"The enemy used the potion and restored the {heal_amount} Health. Enemy Health: {self.enemy_health}. The enemy has potions left: {self.enemy_potions}."
-        else:
-            return "The enemy has no potions!"
-
-    def dodge(self):
-        if random.random() < 0.5:
-            return "You have dodged the enemy's attack!"
-        else:
-            enemy_damage = random.randint(5, 25)
-            self.player_health -= enemy_damage
-            if self.player_health <= 0:
-                return f"You tried to dodge, but failed. The enemy struck {enemy_damage} damage. You've loses."
-            else:
-                return f"You tried to dodge, but failed. The enemy struck {enemy_damage} Damage. Your current health: {self.player_health}."
-
-
-games = {}
+        self.enemy_health += 10
+        self.enemy_potions -= 1
+        text = "The enemy used a potion and restored 10 hp."
+        text_2 = f"Enemy potions remaining: {self.enemy_potions}"
+        heals = discord.Embed(description=f"**+10 hp**", color=discord.Color.red())
+        potions_embed = discord.Embed(description=text_2, color=discord.Color.green())
+        return text, heals, text_2, potions_embed
 
 @bot.command(name="start_shooter")
 async def start_shooter(ctx):
-    game = ShooterGame()
-    games[ctx.author.id] = game
-    await ctx.send("Game on! You have encountered an enemy. Use the commands $attack, $use_potion or $dodge.")
+    if ctx.author.id in games:
+        await ctx.send("🔄You already have an ongoing game.")
+    else:
+        games[ctx.author.id] = ShooterGame()
+        await ctx.send("🎌Game has started! Use the *$attack* command to attack the enemy.")
+
 
 @bot.command(name="attack")
 async def attack(ctx):
     if ctx.author.id not in games:
-        await ctx.send("First, start the game using the $start_shooter command.")
+        await ctx.send("📛First, start the game using the *$start_shooter* command.")
         return
+
     game = games[ctx.author.id]
     result = game.attack()
     await ctx.send(result)
-    if "lose" in result or "win" in result:
+
+    if game.enemy_health <= 0:
+        win_embed = discord.Embed(description="🎉**You won the game!**", color=discord.Color.green())
+        await ctx.send(embed=win_embed)
+        del games[ctx.author.id]
+        return
+    if game.player_health <= 0:
+        lost_embed = discord.Embed(description="😥**You lost the game!**", color=discord.Color.red())
+        await ctx.send(embed=lost_embed)
         del games[ctx.author.id]
         return
 
-    # the enemy can bit you or take a potion
+    # Enemy's turn
     if game.enemy_potions > 0 and random.random() < 0.3:
-        enemy_result = game.enemy_use_potion()
-    else:
-        enemy_result = None
-
-    if enemy_result:
-        await ctx.send(enemy_result)
+        text, heals, text_2, potions_embed = game.enemy_use_potion()
+        await ctx.send(text)
+        await ctx.send(embed=heals)
+        await ctx.send(text_2)
+        await ctx.send(embed=potions_embed)
     else:
         enemy_damage = random.randint(5, 25)
+        player_damage = random.randint(5, 25)
+        damage_embed = discord.Embed(description=f"**-{enemy_damage} damage**", color=discord.Color.red())
+        damage_player_embed = discord.Embed(description=f"**{player_damage} hp's**", color=discord.Color.blue())
         game.player_health -= enemy_damage
-        await ctx.send(f"The enemy has attacked and inflicted upon you {enemy_damage} Damage. Your current health: {game.player_health}")
+        game.enemy_health -= player_damage
+        health_embed = discord.Embed(description=f"**Your {game.player_health} hp | Enemy {game.enemy_health} hp's**", color=discord.Color.green())
+        await ctx.send("**🏹The enemy attacked and inflicted:**")
+        await ctx.send(embed=damage_embed)
+        await ctx.send("**🔪You have inflicted to your enemy:**")
+        await ctx.send(embed=damage_player_embed)
+        await ctx.send("**🔋Current health:**")
+        await ctx.send(embed=health_embed)
 
-    if game.player_health <= 0:
-        await ctx.send("You lose.")
-        del games[ctx.author.id]
-    elif game.enemy_health <= 0:
-        await ctx.send("You win!")
-        del games[ctx.author.id]
+        if game.player_health < 0:
+                lost_embed = discord.Embed(description="😥**You lost the game!**", color=discord.Color.red())
+                await ctx.send(embed=lost_embed)
+                del games[ctx.author.id]
+                return
+        elif game.enemy_health <= 0:
+                win_embed = discord.Embed(description="🎉**You won the game!**", color=discord.Color.green())
+                await ctx.send(embed=win_embed)
+                del games[ctx.author.id]
+                return
 
 @bot.command(name="use_potion")
 async def use_potion(ctx):
     if ctx.author.id not in games:
-        await ctx.send("First, start the game using the $start_shooter command.")
+        await ctx.send("📛First, start the game using the *$start_shooter* command.")
         return
     game = games[ctx.author.id]
-    result = game.use_potion()
-    await ctx.send(result)
+    heal_text, heal_embed, heal_text_2, potions_embed = game.use_potion()
+    await ctx.send(heal_text)
+    if heal_embed:
+        await ctx.send(embed=heal_embed)
+    if heal_text_2:
+        await ctx.send(heal_text_2)
+    if potions_embed:
+        await ctx.send(embed=potions_embed)
 
 @bot.command(name="dodge")
 async def dodge(ctx):
     if ctx.author.id not in games:
-        await ctx.send("First, start the game using the $start_shooter command.")
+        await ctx.send("📛First, start the game using the *$start_shooter* command.")
         return
     game = games[ctx.author.id]
     result = game.dodge()
-    await ctx.send(result)
-    if "lose" in result:
-        del games[ctx.author.id]
+    if isinstance(result, tuple):
+        message, text, damage_embed, text_1, health_embed = result
+        await ctx.send(message)
+        await ctx.send(text)
+        await ctx.send(embed=damage_embed)
+        await ctx.send(text_1)
+        await ctx.send(embed=health_embed)
+    else:
+        await ctx.send(result)
 
-# SECOND GAME
-@bot.event
-async def on_ready():
-    print(f'Logged in as {bot.user.name}')
-
-# lAST EASIEST mini-game
 @bot.command(name="flip")
 async def flip(ctx):
     outcome = random.choice(["Heads", "Tails"])
-    await ctx.send(f"{outcome}")
+    await ctx.send(outcome)
 
-# lAST EASIEST mini-game
 
 # korvander's func
 
@@ -467,8 +502,8 @@ async def help_command(ctx):
     )
 
     embed.add_field(
-        name="📋 Info Abt Us::",
-        value=" ㅤInfo abt our group and process of doing bot: (link to our bot )ㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ    ",
+        name="📋 Info Abt Us:",
+        value=" ㅤInfo abt our group and process of doing bot: [bot page](https://rt.pornhub.com/)\n",
         inline=False
     )
     embed.set_footer(text="📜for detailed information send: $info_help")
