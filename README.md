@@ -26,6 +26,11 @@ This bot has been in development since 2024. Here is everything the command bot 
 - `$n` - command to play next song in queued
 - `$l` - command еo make the bot leave the voice channel
 
+## Translator(deepl) features
+
+- `$tr [the language into which you want to translate] [the text you are translating from]`
+- the translator supports 30 languages
+
 ## Help commands
 
 - `$help` - this command tells basic information about the bot, prefix and commands.

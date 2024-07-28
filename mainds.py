@@ -445,6 +445,11 @@ async def help_command(ctx):
         value="ㅤ$p | $n | $l | $s",
         inline=False
     )
+    embed.add_field(
+        name="📖Translator commands",
+        value=" $tr",
+        inline=False
+    )
 
     embed.add_field(
         name="🎈Funny commands to play with ur friend:",
@@ -469,7 +474,7 @@ async def help_command(ctx):
     embed.set_footer(text="📜for detailed information send: $info_help")
     await ctx.send(embed=embed)
 
-@bot.command(name='info_help')
+@bot.command(name='help_info')
 async def info_help(ctx):
     embed = discord.Embed(
         title="🔮Detailed information abt bot:",
@@ -478,6 +483,13 @@ async def info_help(ctx):
         color=0x0091eb
     )
 
+    embed.add_field(
+        name="📖Deepl-translator commads",
+        value=(
+            " $tr - [the language into which you want to translate] [the text you are translating from]"
+
+        )
+    )
     embed.add_field(
         name="🎼Music info commands:",
         value=(
