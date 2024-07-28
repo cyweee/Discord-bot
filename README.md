@@ -2,7 +2,7 @@
 
 RofloSvin is a free and open source bot for Discord made with discord.py. You can run it on your computer or in the cloud. The bot is safe because you control its code yourself.
 
-![Svin Doc](img/svin-doc.jpg)
+![doc-svin](img/doc-svin.jpg)
 
 ## Features:
 
@@ -50,6 +50,12 @@ For ffmpeg you will need
 
 After that you will need to do run cmd as admin and type this command `setx /m PATH “C:\ffmpeg\bin;%PATH%”`
 if you are successful, restart your computer and check if everything is ok with ffmpeg and write the command `ffmpeg -version`
+
+## How to invite bot
+
+1. If you want invite our bot to your server you will need
+- Open our [web-site]() about bot
+- Click on bottom "Add  to discord"
 
 
 ### Additional Resources
