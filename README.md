@@ -54,7 +54,7 @@ if you are successful, restart your computer and check if everything is ok with 
 ## How to invite bot
 
 1. If you want invite our bot to your server you will need
-- Open our [web-site]() about bot
+- Open our [web-site]() about bot (Currently web is not available in few days will be up and running)
 - Click on bottom "Add  to discord"
 
 
