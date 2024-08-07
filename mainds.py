@@ -37,19 +37,23 @@ ytdl_format_options = {
     'source_address': '0.0.0.0'
 }
 
+# configuration ffmpeg
 ffmpeg_options = {
     'options': '-vn'
 }
+
+# initialization youtube_dl
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
 
 class MusicPlayer:
-    def __init__(self):
+    def __init__(self, bot):
+        self.bot = bot
         self.queue = []
         self.is_playing = False
 
-    async def from_url(self, url, *, loop=None, stream=False):
-        loop = loop or asyncio.get_event_loop()
+    async def from_url(self, url, *, stream=False):
+        loop = asyncio.get_event_loop()
         data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
 
         if 'entries' in data:
@@ -85,16 +89,16 @@ class MusicPlayer:
             await ctx.send("No track is currently playing.")
 
 
-music_player = MusicPlayer()
+music_player = MusicPlayer(bot)
 
 
 @bot.command(name='p')
 async def play(ctx, url):
     if not ctx.voice_client:
-        if not ctx.message.author.voice:
+        if not ctx.author.voice:
             await ctx.send("You're not currently in a voice channel")
             return
-        channel = ctx.message.author.voice.channel
+        channel = ctx.author.voice.channel
         await channel.connect()
     await music_player.add_to_queue(ctx, url)
 
@@ -117,9 +121,9 @@ async def stop(ctx):
 @bot.command(name='n')
 async def skip(ctx):
     await music_player.skip(ctx)
-#cywe
 
-# korvander's func begin
+
+
 
 @bot.event
 async def on_message(message):
@@ -142,10 +146,6 @@ async def on_message(message):
         await message.reply("Своим помахуй")
     else:
         pass
-# korvander's func finish
-
-# Определение сообщений на разных языках
-
 
 
 messages = {
@@ -273,7 +273,6 @@ class AdventureGame:
             return self.messages[self.language]["end_lose"]
 
 
-# Команды для приключенческой игры
 @bot.command(name="start")
 async def start(ctx, lang="en"):
     if lang not in messages:
@@ -344,7 +343,6 @@ class ShooterGame:
 
 
 
-# Команды для шутера
 @bot.command(name="start_shooter")
 async def start_shooter(ctx):
     if ctx.author.id not in games:
@@ -438,13 +436,20 @@ async def dodge(ctx):
             await ctx.send(result)
     else:
         await ctx.send("📛First, start the game using the *$start_shooter* command.")
+
+
 @bot.command(name="flip")
 async def flip(ctx):
     outcome = random.choice(["Heads", "Tails"])
-    await ctx.send(outcome)
 
+    embed = discord.Embed(
+        title="Coin Flip Result",
+        description=f"The coin landed on **{outcome}**!",
+        color=discord.Color.blue()
+    )
 
-# korvander's func
+    await ctx.send(embed=embed)
+
 
 @bot.command(name='tr')
 async def translate(ctx, lang_to: str, *, text: str):
@@ -454,7 +459,6 @@ async def translate(ctx, lang_to: str, *, text: str):
         await ctx.send(f"Ошибка: Язык '{lang_to}' не поддерживается. Пожалуйста, используйте один из следующих языков: {', '.join(supported_langs)}")
         return
     try:
-        # Используйте клиент DeepL для перевода
         result = translator.translate_text(text, target_lang=lang_to)
         await ctx.send(result.text)
     except Exception as e:
