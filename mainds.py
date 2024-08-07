@@ -19,7 +19,6 @@ token_ds = config["token_ds"]
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(intents=intents, command_prefix="$")
-bot.remove_command('help')
 request_log_player = []
 request_log_enemy = []
 
@@ -146,6 +145,9 @@ async def on_message(message):
 # korvander's func finish
 
 # Определение сообщений на разных языках
+
+
+
 messages = {
     "ru": {
         "start": "Ты идешь по улице, и видишь развилку. Что будешь делать?\n1. Пойти по тропинке\n2. Развернуться и вернуться домой",
@@ -177,6 +179,7 @@ messages = {
     }
 }
 
+games = {}
 
 class AdventureGame:
     def __init__(self, language="en"):
@@ -270,33 +273,30 @@ class AdventureGame:
             return self.messages[self.language]["end_lose"]
 
 
-games = {}  # Словарь для отслеживания текущих игр для каждого игрока
-
+# Команды для приключенческой игры
 @bot.command(name="start")
 async def start(ctx, lang="en"):
     if lang not in messages:
         await ctx.send("Can't find this language. Supported languages are: 'en', 'ru'.")
         return
-    game = AdventureGame(language=lang)
-    games[ctx.author.id] = game
-    await ctx.send(game.start_game())
+
+    if ctx.author.id not in games:
+        game = AdventureGame(language=lang)
+        games[ctx.author.id] = game
+        await ctx.send(game.start_game())
+    else:
+        await ctx.send("You already have a game in progress. Use $continue to resume.")
 
 @bot.command(name="continue")
 async def continue_game(ctx, choice):
     game = games.get(ctx.author.id)
-    if game:
+    if isinstance(game, AdventureGame):
         response = game.advance_stage(choice)
         await ctx.send(response)
     else:
-        await ctx.send("You haven't started a game yet. Use $start to begin.")
+        await ctx.send("You haven't started an adventure game yet. Use $start to begin.")
 
 
-
-
-games = {}  # Словарь для хранения игр пользователей
-
-import random
-games = {}  # Словарь для хранения игр пользователей
 
 class ShooterGame:
     def __init__(self, player_health=105, enemy_health=100, enemy_potions=1):
@@ -304,11 +304,9 @@ class ShooterGame:
         self.enemy_health = enemy_health
         self.player_potions = 2
         self.enemy_potions = enemy_potions
-        self.request_log_enemy = []
-        self.request_log_player = []
 
     def attack(self):
-        return f"📃Battle results:"
+        return "📃Battle results:"
 
     def dodge(self):
         if random.random() < 0.5:
@@ -321,8 +319,6 @@ class ShooterGame:
             text = "**🏹The enemy attacked and inflicted:**"
             text_1 = "**🔋Your current health:**"
             return "You failed to dodge! The enemy hit you!", text, damage_embed, text_1, health_embed
-
-
 
     def use_potion(self):
         if self.player_potions > 0:
@@ -346,101 +342,102 @@ class ShooterGame:
         potions_embed = discord.Embed(description=text_2, color=discord.Color.green())
         return text, heals, text_2, potions_embed
 
+
+
+# Команды для шутера
 @bot.command(name="start_shooter")
 async def start_shooter(ctx):
-    if ctx.author.id in games:
-        await ctx.send("🔄You already have an ongoing game.")
+    if ctx.author.id not in games:
+        games[ctx.author.id] = ShooterGame()
+        await ctx.send("🎌Game has started! Use the *$attack* command to attack the enemy.")
     else:
         games[ctx.author.id] = ShooterGame()
         await ctx.send("🎌Game has started! Use the *$attack* command to attack the enemy.")
 
-
 @bot.command(name="attack")
 async def attack(ctx):
-    if ctx.author.id not in games:
-        await ctx.send("📛First, start the game using the *$start_shooter* command.")
-        return
+    game = games.get(ctx.author.id)
+    if isinstance(game, ShooterGame):
+        result = game.attack()
+        await ctx.send(result)
 
-    game = games[ctx.author.id]
-    result = game.attack()
-    await ctx.send(result)
+        if game.enemy_health <= 0:
+            win_embed = discord.Embed(description="🎉**You won the game!**", color=discord.Color.green())
+            await ctx.send(embed=win_embed)
+            del games[ctx.author.id]
+            return
+        if game.player_health <= 0:
+            lost_embed = discord.Embed(description="😥**You lost the game!**", color=discord.Color.red())
+            await ctx.send(embed=lost_embed)
+            del games[ctx.author.id]
+            return
 
-    if game.enemy_health <= 0:
-        win_embed = discord.Embed(description="🎉**You won the game!**", color=discord.Color.green())
-        await ctx.send(embed=win_embed)
-        del games[ctx.author.id]
-        return
-    if game.player_health <= 0:
-        lost_embed = discord.Embed(description="😥**You lost the game!**", color=discord.Color.red())
-        await ctx.send(embed=lost_embed)
-        del games[ctx.author.id]
-        return
+        # Enemy's turn
+        if game.enemy_potions > 0 and random.random() < 0.3:
+            text, heals, text_2, potions_embed = game.enemy_use_potion()
+            await ctx.send(text)
+            await ctx.send(embed=heals)
+            await ctx.send(text_2)
+            await ctx.send(embed=potions_embed)
+        else:
+            enemy_damage = random.randint(5, 25)
+            player_damage = random.randint(5, 25)
+            damage_embed = discord.Embed(description=f"**-{enemy_damage} damage**", color=discord.Color.red())
+            damage_player_embed = discord.Embed(description=f"**-{player_damage} damage**", color=discord.Color.blue())
+            game.player_health -= enemy_damage
+            game.enemy_health -= player_damage
+            health_embed = discord.Embed(description=f"**Your {game.player_health} hp | Enemy {game.enemy_health} hp**", color=discord.Color.green())
+            await ctx.send("**🏹The enemy attacked and inflicted:**")
+            await ctx.send(embed=damage_embed)
+            await ctx.send("**🔪You have inflicted on your enemy:**")
+            await ctx.send(embed=damage_player_embed)
+            await ctx.send("**🔋Current health:**")
+            await ctx.send(embed=health_embed)
 
-    # Enemy's turn
-    if game.enemy_potions > 0 and random.random() < 0.3:
-        text, heals, text_2, potions_embed = game.enemy_use_potion()
-        await ctx.send(text)
-        await ctx.send(embed=heals)
-        await ctx.send(text_2)
-        await ctx.send(embed=potions_embed)
-    else:
-        enemy_damage = random.randint(5, 25)
-        player_damage = random.randint(5, 25)
-        damage_embed = discord.Embed(description=f"**-{enemy_damage} damage**", color=discord.Color.red())
-        damage_player_embed = discord.Embed(description=f"**{player_damage} hp's**", color=discord.Color.blue())
-        game.player_health -= enemy_damage
-        game.enemy_health -= player_damage
-        health_embed = discord.Embed(description=f"**Your {game.player_health} hp | Enemy {game.enemy_health} hp's**", color=discord.Color.green())
-        await ctx.send("**🏹The enemy attacked and inflicted:**")
-        await ctx.send(embed=damage_embed)
-        await ctx.send("**🔪You have inflicted to your enemy:**")
-        await ctx.send(embed=damage_player_embed)
-        await ctx.send("**🔋Current health:**")
-        await ctx.send(embed=health_embed)
-
-        if game.player_health < 0:
+            if game.player_health <= 0:
                 lost_embed = discord.Embed(description="😥**You lost the game!**", color=discord.Color.red())
                 await ctx.send(embed=lost_embed)
                 del games[ctx.author.id]
                 return
-        elif game.enemy_health <= 0:
+            elif game.enemy_health <= 0:
                 win_embed = discord.Embed(description="🎉**You won the game!**", color=discord.Color.green())
                 await ctx.send(embed=win_embed)
                 del games[ctx.author.id]
                 return
+    else:
+        await ctx.send("📛First, start the game using the *$start_shooter* command.")
 
 @bot.command(name="use_potion")
 async def use_potion(ctx):
-    if ctx.author.id not in games:
+    game = games.get(ctx.author.id)
+    if isinstance(game, ShooterGame):
+        heal_text, heal_embed, heal_text_2, potions_embed = game.use_potion()
+        await ctx.send(heal_text)
+        if heal_embed:
+            await ctx.send(embed=heal_embed)
+        if heal_text_2:
+            await ctx.send(heal_text_2)
+        if potions_embed:
+            await ctx.send(embed=potions_embed)
+    else:
         await ctx.send("📛First, start the game using the *$start_shooter* command.")
-        return
-    game = games[ctx.author.id]
-    heal_text, heal_embed, heal_text_2, potions_embed = game.use_potion()
-    await ctx.send(heal_text)
-    if heal_embed:
-        await ctx.send(embed=heal_embed)
-    if heal_text_2:
-        await ctx.send(heal_text_2)
-    if potions_embed:
-        await ctx.send(embed=potions_embed)
 
 @bot.command(name="dodge")
 async def dodge(ctx):
-    if ctx.author.id not in games:
-        await ctx.send("📛First, start the game using the *$start_shooter* command.")
-        return
-    game = games[ctx.author.id]
-    result = game.dodge()
-    if isinstance(result, tuple):
-        message, text, damage_embed, text_1, health_embed = result
-        await ctx.send(message)
-        await ctx.send(text)
-        await ctx.send(embed=damage_embed)
-        await ctx.send(text_1)
-        await ctx.send(embed=health_embed)
+    game = games.get(ctx.author.id)
+    if isinstance(game, ShooterGame):
+        result = game.dodge()
+        if isinstance(result, tuple):
+            message, text, damage_embed, text_1, health_embed = result
+            await ctx.send(message)
+            await ctx.send(text)
+            await ctx.send(embed=damage_embed)
+            await ctx.send(text_1)
+            await ctx.send(embed=health_embed)
+        else:
+            await ctx.send(result)
     else:
-        await ctx.send(result)
-
+        await ctx.send("📛First, start the game using the *$start_shooter* command.")
 @bot.command(name="flip")
 async def flip(ctx):
     outcome = random.choice(["Heads", "Tails"])
