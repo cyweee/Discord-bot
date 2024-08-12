@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import yt_dlp as youtube_dl
+import tekore as tk
 import json
 import deepl
 import asyncio
@@ -16,9 +17,13 @@ except (FileNotFoundError, json.JSONDecodeError) as e:
 DEEPL_API_KEY = config["DEEPL_API_KEY"]
 translator = deepl.Translator(DEEPL_API_KEY)
 token_ds = config["token_ds"]
+spotify_client_id = config["spotify_client_id"]
+spotify_client_secret = config["spotify_client_secret"]
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(intents=intents, command_prefix="$")
+cred = tk.request_client_token(spotify_client_id, spotify_client_secret)
+spotify = tk.Spotify(cred)
 request_log_player = []
 request_log_enemy = []
 
@@ -74,11 +79,23 @@ class MusicPlayer:
             self.is_playing = False
 
     async def add_to_queue(self, ctx, url):
+        if "spotify.com" in url:
+            url = await self.get_youtube_url_from_spotify(url)
+            if url is None:
+                await ctx.send("Could not find a corresponding YouTube video for this Spotify track.")
+                return
         self.queue.append(url)
         if not self.is_playing:
             await self.play_next(ctx)
         else:
             await ctx.send(f'Queued: {url}')
+
+    async def get_youtube_url_from_spotify(self, spotify_url):
+        track_id = spotify_url.split("/")[-1].split("?")[0]
+        track = spotify.track(track_id)
+        search_query = f"{track.name} {track.artists[0].name}"
+        search_result = await self.from_url(f"ytsearch:{search_query}", stream=True)
+        return search_result
 
     async def skip(self, ctx):
         if ctx.voice_client.is_playing():
@@ -88,9 +105,7 @@ class MusicPlayer:
         else:
             await ctx.send("No track is currently playing.")
 
-
 music_player = MusicPlayer(bot)
-
 
 @bot.command(name='p')
 async def play(ctx, url):
@@ -102,12 +117,10 @@ async def play(ctx, url):
         await channel.connect()
     await music_player.add_to_queue(ctx, url)
 
-
 @bot.command(name='l')
 async def leave(ctx):
     if ctx.voice_client:
         await ctx.voice_client.disconnect()
-
 
 @bot.command(name='s')
 async def stop(ctx):
@@ -117,10 +130,10 @@ async def stop(ctx):
         music_player.is_playing = False
         await ctx.send("Playback stopped and queue cleared.")
 
-
 @bot.command(name='n')
 async def skip(ctx):
     await music_player.skip(ctx)
+
 
 
 
