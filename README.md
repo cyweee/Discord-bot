@@ -21,7 +21,7 @@ This bot has been in development since 2024. Here is everything the command bot 
 
 ## Music features
 
-- `$p [youtube url]` - command to play music in the voice channel
+- `$p [youtube url] or [spotify url]` - command to play music in the voice channel
 - `$s` - command to stop the music
 - `$n` - command to play next song in queued
 - `$l` - command еo make the bot leave the voice channel
@@ -30,6 +30,8 @@ This bot has been in development since 2024. Here is everything the command bot 
 
 - `$tr [the language into which you want to translate] [the text you are translating from]`
 - the translator supports 30 languages
+
+For deepl translator to work in discord wat will need deepl API key which you can find at [deepl api](https://www.deepl.com/ru/products/api).
 
 ## Help commands
 
@@ -55,6 +57,17 @@ For ffmpeg you will need
 
 After that you will need to do run cmd as admin and type this command `setx /m PATH “C:\ffmpeg\bin;%PATH%”`
 if you are successful, restart your computer and check if everything is ok with ffmpeg and write the command `ffmpeg -version`
+
+To play music you will also need libraries such as
+
+yt_dlp(for YouTube), 
+tekora(for Spotify)
+
+installing them is easy, you just need to write in the terminal such commands as
+`pip install yt-dlp`
+`pip install tekora`
+
+Also in order to use Spotify you will need Spotify API key, which you can get on [Spotify for developers](https://developer.spotify.com/).
 
 ## How to invite bot
 

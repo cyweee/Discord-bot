@@ -542,7 +542,7 @@ async def info_help(ctx):
     embed.add_field(
         name="🎼Music info commands:",
         value=(
-            "ㅤ$p - Send this to play your track then space and your url to youtube video\n"
+            "ㅤ$p - Send this to play your youtube or spotify track\n"
             "ㅤ$n - Send this to skip your track\n"
             "ㅤ$s - Send this to stop ur track\n"
             "ㅤ$l - Send this to just leave bot from vc"
