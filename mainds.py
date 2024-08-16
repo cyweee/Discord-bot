@@ -453,10 +453,10 @@ async def dodge(ctx):
 
 @bot.command(name="flip")
 async def flip(ctx):
-    outcome = random.choice(["Heads", "Tails"])
+    outcome = random.choice(["🦅Heads", "🥜Tails"])
 
     embed = discord.Embed(
-        title="Coin Flip Result",
+        title="🪙Coin Flip Result",
         description=f"The coin landed on **{outcome}**!",
         color=discord.Color.blue()
     )
