@@ -520,7 +520,7 @@ async def help_command(ctx):
         value=" ㅤInfo abt our group and process of doing bot: [bot page](https://rengoku2323423.neocities.org/Roflosvin-WEB/sait/)\n",
         inline=False
     )
-    embed.set_footer(text="📜for detailed information send: $info_help")
+    embed.set_footer(text="📜for detailed information send: $help_info")
     await ctx.send(embed=embed)
 
 @bot.command(name='help_info')
