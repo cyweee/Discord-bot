@@ -517,7 +517,7 @@ async def help_command(ctx):
 
     embed.add_field(
         name="📋 Info Abt Us:",
-        value=" ㅤInfo abt our group and process of doing bot: [bot page](https://rt.pornhub.com/)\n",
+        value=" ㅤInfo abt our group and process of doing bot: [bot page](https://rengoku2323423.neocities.org/Roflosvin-WEB/sait/)\n",
         inline=False
     )
     embed.set_footer(text="📜for detailed information send: $info_help")

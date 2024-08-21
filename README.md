@@ -72,7 +72,7 @@ Also in order to use Spotify you will need Spotify API key, which you can get on
 ## How to invite bot
 
 1. If you want invite our bot to your server you will need
-- Open our [web-site]() about bot (Currently web is not available in few days will be up and running)
+- Open our [web-site](https://rengoku2323423.neocities.org/Roflosvin-WEB/sait/) about bot
 - Click on bottom "Add  to discord"
 
 
